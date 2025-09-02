@@ -263,9 +263,10 @@ function isLaunchActivity(activity) {
 
 /**
  * Create JSON object that represent intent-filter for universal link.
+ * Updated to use the new App Links format where scheme is always https.
  *
  * @param {String} host - host name
- * @param {String} scheme - host scheme
+ * @param {String} scheme - host scheme (ignored, always uses https)
  * @param {String} pathName - host path
  * @return {Object} intent-filter as a JSON object
  */
@@ -291,7 +292,7 @@ function createIntentFilter(host, scheme, pathName) {
     'data': [{
       '$': {
         'android:host': host,
-        'android:scheme': scheme
+        'android:scheme': 'https'
       }
     }]
   };

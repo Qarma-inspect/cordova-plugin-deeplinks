@@ -14,7 +14,7 @@ var ConfigXmlHelper = require('../configXmlHelper.js');
 var WEB_HOOK_FILE_PATH = path.join('ul_web_hooks', 'android', 'android_web_hook.html');
 var WEB_HOOK_TPL_FILE_PATH = path.join('plugins', 'cordova-plugin-deeplinks', 'ul_web_hooks', 'android_web_hook_tpl.html');
 var LINK_PLACEHOLDER = '[__LINKS__]';
-var LINK_TEMPLATE = '<link rel="alternate" href="android-app://<package_name>/<scheme>/<host><path>" />';
+var LINK_TEMPLATE = '<link rel="alternate" href="<scheme>://<host><path>" />';
 
 module.exports = {
   generate: generateWebHook
@@ -75,12 +75,12 @@ function readTemplate(projectRoot) {
  * Generate list of <link /> tags based on plugin preferences.
  *
  * @param {String} projectRoot - absolute path to cordova's project root
- * @param {String} packageName - android application package name
+ * @param {String} packageName - android application package name (not used in new format)
  * @param {Object} pluginPreferences - plugin preferences, defined in config.xml; already parsed
  * @return {String} list of <link /> tags
  */
 function generateLinksSet(projectRoot, packageName, pluginPreferences) {
-  var linkTpl = LINK_TEMPLATE.replace('<package_name>', packageName);
+  var linkTpl = LINK_TEMPLATE;
   var content = '';
 
   pluginPreferences.hosts.forEach(function(host) {
