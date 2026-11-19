@@ -26,6 +26,14 @@
 
 - (void)pluginInitialize {
     [self localInit];
+    // cordova-ios 8+ apps use the UIScene life cycle, so iOS delivers universal links to the scene
+    // delegate instead of -application:continueUserActivity:restorationHandler: in
+    // AppDelegate+CULPlugin. CDVSceneDelegate re-posts them (also on a cold launch, once the page
+    // has loaded) under this notification. Name given as a literal so older cordova-ios still builds.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(onContinueUserActivity:)
+                                                 name:@"CDVPluginContinueUserActivityNotification"
+                                               object:nil];
     // Can be used for testing.
     // Just uncomment, close the app and reopen it. That will simulate application launch from the link.
 //    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onResume:) name:UIApplicationWillEnterForegroundNotification object:nil];
@@ -48,6 +56,19 @@
     if (host) {
         [self storeEventWithHost:host originalURL:url];
     }
+}
+
+- (void)onContinueUserActivity:(NSNotification *)notification {
+    NSUserActivity *userActivity = notification.object;
+    if (![userActivity isKindOfClass:[NSUserActivity class]]) {
+        return;
+    }
+    // ignore activities that are not for Universal Links
+    if (![userActivity.activityType isEqualToString:NSUserActivityTypeBrowsingWeb] || userActivity.webpageURL == nil) {
+        return;
+    }
+
+    [self handleUserActivity:userActivity];
 }
 
 - (BOOL)handleUserActivity:(NSUserActivity *)userActivity {

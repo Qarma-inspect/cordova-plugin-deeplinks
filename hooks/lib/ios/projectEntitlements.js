@@ -11,6 +11,7 @@ var fs = require('fs');
 var plist = require('plist');
 var mkpath = require('mkpath');
 var ConfigXmlHelper = require('../configXmlHelper.js');
+var projectLayout = require('./projectLayout.js');
 var ASSOCIATED_DOMAINS = 'com.apple.developer.associated-domains';
 var context;
 var projectRoot;
@@ -32,10 +33,12 @@ module.exports = {
 function generateEntitlements(cordovaContext, pluginPreferences) {
   context = cordovaContext;
 
-  var currentEntitlements = getEntitlementsFileContent();
-  var newEntitlements = injectPreferences(currentEntitlements, pluginPreferences);
+  entitlementsFilePaths().forEach(function(filePath) {
+    var currentEntitlements = getEntitlementsFileContent(filePath);
+    var newEntitlements = injectPreferences(currentEntitlements, pluginPreferences);
 
-  saveContentToEntitlementsFile(newEntitlements);
+    saveContentToEntitlementsFile(filePath, newEntitlements);
+  });
 }
 
 // endregion
@@ -45,11 +48,11 @@ function generateEntitlements(cordovaContext, pluginPreferences) {
 /**
  * Save data to entitlements file.
  *
+ * @param {String} filePath - absolute path to the entitlements file
  * @param {Object} content - data to save; JSON object that will be transformed into xml
  */
-function saveContentToEntitlementsFile(content) {
+function saveContentToEntitlementsFile(filePath, content) {
   var plistContent = plist.build(content);
-  var filePath = pathToEntitlementsFile();
 
   // ensure that file exists
   mkpath.sync(path.dirname(filePath));
@@ -61,10 +64,11 @@ function saveContentToEntitlementsFile(content) {
 /**
  * Read data from existing entitlements file. If none exist - default value is returned
  *
+ * @param {String} pathToFile - absolute path to the entitlements file
+ *
  * @return {String} entitlements file content
  */
-function getEntitlementsFileContent() {
-  var pathToFile = pathToEntitlementsFile();
+function getEntitlementsFileContent(pathToFile) {
   var content;
 
   try {
@@ -134,6 +138,20 @@ function domainsListEntryForHost(host) {
 // endregion
 
 // region Path helper methods
+
+/**
+ * Entitlements files to write the associated domains into.
+ * cordova-ios 8+ has one per build configuration; older versions use the file this plugin creates.
+ *
+ * @return {String[]} absolute paths to entitlements files
+ */
+function entitlementsFilePaths() {
+  if (projectLayout.usesFixedAppProject(getProjectRoot())) {
+    return projectLayout.fixedProjectEntitlementsFiles(getProjectRoot());
+  }
+
+  return [pathToEntitlementsFile()];
+}
 
 /**
  * Path to entitlements file.

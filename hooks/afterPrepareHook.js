@@ -11,6 +11,7 @@ var androidWebHook = require('./lib/android/webSiteHook.js');
 var iosProjectEntitlements = require('./lib/ios/projectEntitlements.js');
 var iosAppSiteAssociationFile = require('./lib/ios/appleAppSiteAssociationFile.js');
 var iosProjectPreferences = require('./lib/ios/xcodePreferences.js');
+var iosProjectLayout = require('./lib/ios/projectLayout.js');
 var ANDROID = 'android';
 var IOS = 'ios';
 
@@ -75,8 +76,11 @@ function activateUniversalLinksInAndroid(cordovaContext, pluginPreferences) {
  * @param {Object} pluginPreferences - plugin preferences from the config.xml file. Basically, content from <universal-links> tag.
  */
 function activateUniversalLinksInIos(cordovaContext, pluginPreferences) {
-  // modify xcode project preferences
-  iosProjectPreferences.enableAssociativeDomainsCapability(cordovaContext);
+  // modify xcode project preferences; cordova-ios 8+ already points Code Sign Entitlements
+  // at its own Entitlements-*.plist files, so there is nothing to change in the project there
+  if (!iosProjectLayout.usesFixedAppProject(cordovaContext.opts.projectRoot)) {
+    iosProjectPreferences.enableAssociativeDomainsCapability(cordovaContext);
+  }
 
   // generate entitlements file
   iosProjectEntitlements.generateAssociatedDomainsEntitlements(cordovaContext, pluginPreferences);
